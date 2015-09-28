@@ -241,10 +241,10 @@ bool CCueDocument::GetSong(int aTrackNumber, CSong& aSong)
     return false;
   const CCueTrack& track = m_tracks[aTrackNumber];
   if ((track.strArtist.length() == 0) && (m_strArtist.length() > 0))
-    aSong.artist = StringUtils::Split(m_strArtist, g_advancedSettings.m_musicItemSeparator);
+    aSong.strArtistDesc = m_strArtist;
   else
-    aSong.artist = StringUtils::Split(track.strArtist, g_advancedSettings.m_musicItemSeparator);
-  aSong.albumArtist = StringUtils::Split(m_strArtist, g_advancedSettings.m_musicItemSeparator);
+    aSong.strArtistDesc = track.strArtist;
+//  aSong.albumArtist = StringUtils::Split(m_strArtist, g_advancedSettings.m_musicItemSeparator);
   aSong.strAlbum = m_strAlbum;
   aSong.genre = StringUtils::Split(m_strGenre, g_advancedSettings.m_musicItemSeparator);
   aSong.iYear = m_iYear;

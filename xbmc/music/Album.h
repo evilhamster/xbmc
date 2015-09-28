@@ -46,7 +46,6 @@ public:
     idAlbum = -1;
     strAlbum.clear();
     strMusicBrainzAlbumID.clear();
-    artist.clear();
     artistCredits.clear();
     strArtistDesc.clear();
     genre.clear();
@@ -106,7 +105,6 @@ public:
   long idAlbum;
   std::string strAlbum;
   std::string strMusicBrainzAlbumID;
-  std::vector<std::string> artist;
   std::string strArtistDesc;
   VECARTISTCREDITS artistCredits;
   std::vector<std::string> genre;

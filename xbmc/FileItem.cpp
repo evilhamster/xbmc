@@ -1449,7 +1449,7 @@ void CFileItem::SetFromAlbum(const CAlbum &album)
   if (!album.strAlbum.empty())
     SetLabel(album.strAlbum);
   m_bIsFolder = true;
-  m_strLabel2 = StringUtils::Join(album.artist, g_advancedSettings.m_musicItemSeparator);
+  m_strLabel2 = StringUtils::Join(album.GetAlbumArtist(), g_advancedSettings.m_musicItemSeparator);
   GetMusicInfoTag()->SetAlbum(album);
   SetArt(album.art);
   m_bIsAlbum = true;
@@ -1589,12 +1589,13 @@ bool CFileItem::LoadTracksFromCueDocument(CFileItemList& scannedItems)
       {
         if (song.strAlbum.empty() && !tag.GetAlbum().empty())
           song.strAlbum = tag.GetAlbum();
-        if (song.albumArtist.empty() && !tag.GetAlbumArtist().empty())
-          song.albumArtist = tag.GetAlbumArtist();
+        //Setting song albumartist vector not propagated to Album or DB, so no point here
+//        if (song.GetAlbumArtist.empty() && !tag.GetAlbumArtist().empty())
+//          song.m_albumArtist = tag.GetAlbumArtist();        
         if (song.genre.empty() && !tag.GetGenre().empty())
           song.genre = tag.GetGenre();
-        if (song.artist.empty() && !tag.GetArtist().empty())
-          song.artist = tag.GetArtist();
+        if (song.GetArtist().empty() && !tag.GetArtist().empty())          
+          song.strArtistDesc = tag.GetArtistDesc(); // Also set artist credits from tag structure ?
         if (tag.GetDiscNumber())
           song.iTrack |= (tag.GetDiscNumber() << 16); // see CMusicInfoTag::GetDiscNumber()
         if (!tag.GetCueSheet().empty())

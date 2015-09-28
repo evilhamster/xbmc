@@ -327,7 +327,11 @@ void CMusicInfoTag::SetArtist(const std::string& strArtist)
     SetArtistDesc(strArtist);
   }
   else
+  {
+    m_strArtistDesc.clear();
     m_artist.clear();
+
+  }
 }
 
 void CMusicInfoTag::SetArtist(const std::vector<std::string>& artists)
@@ -628,7 +632,7 @@ void CMusicInfoTag::SetSong(const CSong& song)
   SetArtist(song.GetArtist());
   SetMusicBrainzArtistID(song.GetMusicBrainzArtistID());
   SetAlbum(song.strAlbum);
-  SetAlbumArtist(song.albumArtist); //Only have album artist in song as vector, no desc or MBID
+  SetAlbumArtist(song.GetAlbumArtist()); //Only have album artist in song as vector, no desc or MBID
   SetMusicBrainzTrackID(song.strMusicBrainzTrackID);
   SetComment(song.strComment);
   SetCueSheet(song.strCueSheet);
