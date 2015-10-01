@@ -627,10 +627,18 @@ void CMusicInfoTag::SetSong(const CSong& song)
 {
   SetTitle(song.strTitle);
   SetGenre(song.genre);
-  //Set all artist infomation from song artist credits and artist description
-  SetArtistDesc(song.strArtistDesc);
-  SetArtist(song.GetArtist());
-  SetMusicBrainzArtistID(song.GetMusicBrainzArtistID());
+  /* Set all artist infomation from song artist credits and artist description.
+     During processing e.g. Cue Sheets, song may only have artist description string 
+     rather than a fully populated artist credits vector.
+  */
+  if (!song.HasArtistCredits())
+    SetArtist(song.strArtistDesc); //Sets both artist description string and artist vector from string
+  else
+  {
+    SetArtistDesc(song.strArtistDesc);
+    SetArtist(song.GetArtist());
+    SetMusicBrainzArtistID(song.GetMusicBrainzArtistID());
+  }
   SetAlbum(song.strAlbum);
   SetAlbumArtist(song.GetAlbumArtist()); //Only have album artist in song as vector, no desc or MBID
   SetMusicBrainzTrackID(song.strMusicBrainzTrackID);

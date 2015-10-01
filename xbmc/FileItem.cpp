@@ -1589,13 +1589,15 @@ bool CFileItem::LoadTracksFromCueDocument(CFileItemList& scannedItems)
       {
         if (song.strAlbum.empty() && !tag.GetAlbum().empty())
           song.strAlbum = tag.GetAlbum();
-        //Setting song albumartist vector not propagated to Album or DB, so no point here
-//        if (song.GetAlbumArtist.empty() && !tag.GetAlbumArtist().empty())
-//          song.m_albumArtist = tag.GetAlbumArtist();        
+        //Pass album artist to final MusicInfoTag object via setting song album artist vector. 
+        if (song.GetAlbumArtist().empty() && !tag.GetAlbumArtist().empty())
+          song.SetAlbumArtist(tag.GetAlbumArtist());        
         if (song.genre.empty() && !tag.GetGenre().empty())
           song.genre = tag.GetGenre();
-        if (song.GetArtist().empty() && !tag.GetArtist().empty())          
-          song.strArtistDesc = tag.GetArtistDesc(); // Also set artist credits from tag structure ?
+        //Pass artist to final MusicInfoTag object via setting song artist description string only.
+        //Artist credits not used during loading from cue sheet. 
+        if (song.strArtistDesc.empty() && !tag.GetArtistDesc().empty())
+          song.strArtistDesc = tag.GetArtistDesc();
         if (tag.GetDiscNumber())
           song.iTrack |= (tag.GetDiscNumber() << 16); // see CMusicInfoTag::GetDiscNumber()
         if (!tag.GetCueSheet().empty())

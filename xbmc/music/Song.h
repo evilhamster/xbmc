@@ -95,6 +95,12 @@ public:
   \param album artist names as a vector of strings
   */
   void SetAlbumArtist(const std::vector<std::string>& albumartists) { m_albumArtist = albumartists; }
+  
+  /*! \brief Whether this song has any artists in artist credits vector
+    Tests if artist credits has been populated yet, during processing there can be
+    artists in the artist description but not yet in the credits
+  */
+  bool HasArtistCredits() const { return !artistCredits.empty(); }
 
   /*! \brief whether this song has art associated with it
    Tests both the strThumb and embeddedArt members.
