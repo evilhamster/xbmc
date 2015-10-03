@@ -1449,7 +1449,7 @@ void CFileItem::SetFromAlbum(const CAlbum &album)
   if (!album.strAlbum.empty())
     SetLabel(album.strAlbum);
   m_bIsFolder = true;
-  m_strLabel2 = StringUtils::Join(album.GetAlbumArtist(), g_advancedSettings.m_musicItemSeparator);
+  m_strLabel2 = album.strArtistDesc;
   GetMusicInfoTag()->SetAlbum(album);
   SetArt(album.art);
   m_bIsAlbum = true;
