@@ -104,6 +104,8 @@ public:
   CDateTime dateAdded;
 };
 
+enum MusicArtistRoles { Role_Unknown, Role_Artist, Role_AlbumArtist, Role_Composer, Role_Conductor, Role_Ensemble };
+
 class CArtistCredit
 {
   friend class CAlbum;
@@ -111,9 +113,10 @@ class CArtistCredit
 
 public:
   CArtistCredit() { }
-  CArtistCredit(std::string strArtist, std::string strJoinPhrase) : m_strArtist(strArtist), m_strJoinPhrase(strJoinPhrase), m_boolFeatured(false) { }
-  CArtistCredit(std::string strArtist, std::string strMusicBrainzArtistID, std::string strJoinPhrase)
-  : m_strArtist(strArtist), m_strMusicBrainzArtistID(strMusicBrainzArtistID), m_strJoinPhrase(strJoinPhrase), m_boolFeatured(false)  {  }
+  CArtistCredit(std::string strArtist) : m_strArtist(strArtist) { }
+  CArtistCredit(std::string strArtist, std::string strMusicBrainzArtistID)
+    : m_strArtist(strArtist), m_strMusicBrainzArtistID(strMusicBrainzArtistID) {  }
+
   bool operator<(const CArtistCredit& a) const
   {
     if (m_strMusicBrainzArtistID.empty() && a.m_strMusicBrainzArtistID.empty())
@@ -130,19 +133,15 @@ public:
 
   std::string GetArtist() const                { return m_strArtist; }
   std::string GetMusicBrainzArtistID() const   { return m_strMusicBrainzArtistID; }
-  std::string GetJoinPhrase() const            { return m_strJoinPhrase; }
   int         GetArtistId() const              { return idArtist; }
   void SetArtist(const std::string &strArtist) { m_strArtist = strArtist; }
   void SetMusicBrainzArtistID(const std::string &strMusicBrainzArtistID) { m_strMusicBrainzArtistID = strMusicBrainzArtistID; }
-  void SetJoinPhrase(const std::string &strJoinPhrase) { m_strJoinPhrase = strJoinPhrase; }
   void SetArtistId(int idArtist)               { this->idArtist = idArtist; }
 
 private:
   long idArtist;
   std::string m_strArtist;
   std::string m_strMusicBrainzArtistID;
-  std::string m_strJoinPhrase;
-  bool m_boolFeatured;
 };
 
 typedef std::vector<CArtist> VECARTISTS;

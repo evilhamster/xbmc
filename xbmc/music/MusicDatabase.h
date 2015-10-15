@@ -115,7 +115,7 @@ public:
    \param strComment [in] the ids of the added songs
    \param strMood [in] the mood of the added song
    \param strThumb [in] the ids of the added songs
-   \param artistString [in] the assembled artist string, denormalized from CONCAT(strArtist||strJoinPhrase)
+   \param artistString [in] the assembled artist string
    \param genres [in] a vector of genres to which this song belongs
    \param iTrack [in] the track number and disc number of the song
    \param iDuration [in] the duration of the song
@@ -163,7 +163,7 @@ public:
    \param strComment [in] the ids of the added songs
    \param strMood [in] the mood of the added song
    \param strThumb [in] the ids of the added songs
-   \param artistString [in] the full artist string, denormalized from CONCAT(song_artist.strArtist || song_artist.strJoinPhrase)
+   \param artistString [in] the full artist string
    \param genres [in] a vector of genres to which this song belongs
    \param iTrack [in] the track number and disc number of the song
    \param iDuration [in] the duration of the song
@@ -295,12 +295,12 @@ public:
   /////////////////////////////////////////////////
   // Link tables
   /////////////////////////////////////////////////
-  bool AddAlbumArtist(int idArtist, int idAlbum, std::string strArtist, std::string joinPhrase, bool featured, int iOrder);
+  bool AddAlbumArtist(int idArtist, int idAlbum, std::string strArtist, int iOrder);
   bool GetAlbumsByArtist(int idArtist, bool includeFeatured, std::vector<int>& albums);
   bool GetArtistsByAlbum(int idAlbum, bool includeFeatured, std::vector<int>& artists);
   bool DeleteAlbumArtistsByAlbum(int idAlbum);
 
-  bool AddSongArtist(int idArtist, int idSong, std::string strArtist, std::string joinPhrase, bool featured, int iOrder);
+  bool AddSongArtist(int idArtist, int idSong, std::string strArtist, int iOrder);
   bool GetSongsByArtist(int idArtist, bool includeFeatured, std::vector<int>& songs);
   bool GetArtistsBySong(int idSong, bool includeFeatured, std::vector<int>& artists);
   bool DeleteSongArtistsBySong(int idSong);
@@ -586,8 +586,6 @@ private:
     artistCredit_idArtist,
     artistCredit_strArtist,
     artistCredit_strMusicBrainzArtistID,
-    artistCredit_bFeatured,
-    artistCredit_strJoinPhrase,
     artistCredit_iOrder,
     artistCredit_enumCount
   } ArtistCreditFields;

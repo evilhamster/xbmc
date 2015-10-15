@@ -21,6 +21,7 @@
 #include "Song.h"
 #include "music/tags/MusicInfoTag.h"
 #include "utils/Variant.h"
+#include "utils/StringUtils.h"
 #include "FileItem.h"
 #include "settings/AdvancedSettings.h"
 
@@ -53,8 +54,7 @@ CSong::CSong(CFileItem& item)
         artistName = (i < artist.size()) ? artist[i] : artist[0];
       if (artistName.empty())
         artistName = artistId;
-      std::string strJoinPhrase = (i == tag.GetMusicBrainzArtistID().size()-1) ? "" : g_advancedSettings.m_musicItemSeparator;
-      CArtistCredit artistCredit(artistName, artistId, strJoinPhrase);
+      CArtistCredit artistCredit(artistName, artistId);
       artistCredits.push_back(artistCredit);
     }
   }
@@ -62,8 +62,7 @@ CSong::CSong(CFileItem& item)
   { // no musicbrainz info, so fill in directly
     for (std::vector<std::string>::const_iterator it = tag.GetArtist().begin(); it != tag.GetArtist().end(); ++it)
     {
-      std::string strJoinPhrase = (it == --tag.GetArtist().end() ? "" : g_advancedSettings.m_musicItemSeparator);
-      CArtistCredit artistCredit(*it, "", strJoinPhrase);
+      CArtistCredit artistCredit(*it);
       artistCredits.push_back(artistCredit);
     }
   }
@@ -187,9 +186,12 @@ const std::string CSong::GetArtistString() const
   //but is takes precidence as a string because artistcredits is not always filled during processing
   if (!strArtistDesc.empty())
     return strArtistDesc;
+  std::vector<std::string> artistvector;
+  for (VECARTISTCREDITS::const_iterator i = artistCredits.begin(); i != artistCredits.end(); ++i)
+    artistvector.push_back(i->GetArtist());
   std::string artistString;
-  for (VECARTISTCREDITS::const_iterator artistCredit = artistCredits.begin(); artistCredit != artistCredits.end(); ++artistCredit)
-    artistString += artistCredit->GetArtist() + artistCredit->GetJoinPhrase();
+  if (!artistvector.empty())
+    artistString = StringUtils::Join(artistvector, g_advancedSettings.m_musicItemSeparator);
   return artistString;
 }
 
