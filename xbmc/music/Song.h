@@ -131,6 +131,9 @@ public:
   std::string strMusicBrainzTrackID;
   std::string strComment;
   std::string strMood;
+  std::string strComposer;
+  std::string strEnsemble;
+  std::string strConductor;
   std::string strCueSheet;
   char rating;
   int iTrack;

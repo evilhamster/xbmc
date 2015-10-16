@@ -731,6 +731,42 @@ void CMusicInfoScanner::FileItemsToAlbums(CFileItemList& items, VECALBUMS& album
       albums.push_back(album);
     }
   }
+
+  // Finally identify the additonal contributing artists (composer, conductor etc.) for each album from the song contributors.
+  // If an album artist has a role for any song then they play that role for the album too.
+  // Otherwise if the role is played by a common artist in all songs they play that role for the album too.
+  for (VECALBUMS::iterator album = albums.begin(); album != albums.end(); ++album)
+  {
+    bool CommonComp = true;
+    bool CommonCond = true;
+    bool CommonEnsem = true;
+    for (VECSONGS::iterator song = album->songs.begin(); song != album->songs.end(); ++song)
+    {
+      if (song > album->songs.begin())
+      {
+        CommonComp = CommonComp && (StringUtils::EqualsNoCase(song->strComposer, album->songs.begin()->strComposer));
+        CommonCond = CommonCond && (StringUtils::EqualsNoCase(song->strConductor, album->songs.begin()->strConductor));
+        CommonEnsem = CommonEnsem && (StringUtils::EqualsNoCase(song->strEnsemble, album->songs.begin()->strEnsemble));
+      }
+      // If an album artist has a role for any song then they have that role for the album too.
+      for (VECARTISTCREDITS::iterator albumArtistCredit = album->artistCredits.begin(); albumArtistCredit != album->artistCredits.end(); ++albumArtistCredit) 
+      {
+        if (StringUtils::EqualsNoCase(albumArtistCredit->GetArtist(), song->strComposer))
+          album->strComposer = song->strComposer;
+        if (StringUtils::EqualsNoCase(albumArtistCredit->GetArtist(), song->strConductor))
+          album->strConductor = song->strConductor;
+        if (StringUtils::EqualsNoCase(albumArtistCredit->GetArtist(), song->strEnsemble))
+          album->strEnsemble = song->strEnsemble;
+      }
+    }
+    // If a role is not filled by an album artist see if role is contributed by common artist in all songs
+    if (album->strComposer.empty() && CommonComp)
+      album->strComposer = album->songs.begin()->strComposer;
+    if (album->strConductor.empty() && CommonCond)
+      album->strConductor = album->songs.begin()->strConductor;
+    if (album->strEnsemble.empty() && CommonEnsem)
+      album->strEnsemble = album->songs.begin()->strEnsemble; 
+  }
 }
 
 int CMusicInfoScanner::RetrieveMusicInfo(const std::string& strDirectory, CFileItemList& items)

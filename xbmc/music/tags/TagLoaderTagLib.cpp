@@ -292,6 +292,11 @@ bool CTagLoaderTagLib::ParseASF(ASF::Tag *asf, EmbeddedArt *art, CMusicInfoTag& 
       SetGenre(tag, GetASFStringList(it->second));
     else if (it->first == "WM/Mood")
       tag.SetMood(it->second.front().toString().to8Bit(true));
+    else if (it->first == "WM/Composer")
+      tag.SetComposer(it->second.front().toString().to8Bit(true));
+    else if (it->first == "WM/Conductor")
+      tag.SetConductor(it->second.front().toString().to8Bit(true));
+    //No ASF/WMA tag from Taglib for "ensemble"
     else if (it->first == "WM/AlbumArtistSortOrder")
     {} // Known unsupported, supress warnings
     else if (it->first == "WM/ArtistSortOrder")
@@ -398,6 +403,8 @@ bool CTagLoaderTagLib::ParseID3v2Tag(ID3v2::Tag *id3v2, EmbeddedArt *art, CMusic
     else if (it->first == "TYER")   tag.SetYear(strtol(it->second.front()->toString().toCString(true), NULL, 10));
     else if (it->first == "TCMP")   tag.SetCompilation((strtol(it->second.front()->toString().toCString(true), NULL, 10) == 0) ? false : true);
     else if (it->first == "TENC")   {} // EncodedBy
+    else if (it->first == "TCOM")   tag.SetComposer(it->second.front()->toString().to8Bit(true));
+    else if (it->first == "TPE3")   tag.SetConductor(it->second.front()->toString().to8Bit(true));
     else if (it->first == "TCOP")   {} // Copyright message
     else if (it->first == "TDRC")   tag.SetYear(strtol(it->second.front()->toString().toCString(true), NULL, 10));
     else if (it->first == "TDRL")   tag.SetYear(strtol(it->second.front()->toString().toCString(true), NULL, 10));
@@ -463,6 +470,8 @@ bool CTagLoaderTagLib::ParseID3v2Tag(ID3v2::Tag *id3v2, EmbeddedArt *art, CMusic
           else
             tag.SetMusicBrainzAlbumArtistHints(StringListToVectorString(stringList));
         }
+        else if (desc == "ENSEMBLE")  //TXXX tag as TPE2 used as albumartist
+          tag.SetEnsemble(stringList.front().to8Bit(true));
         else if (desc == "MOOD")
           tag.SetMood(stringList.front().to8Bit(true));
         else if (g_advancedSettings.m_logLevel == LOG_LEVEL_MAX)
@@ -572,6 +581,12 @@ bool CTagLoaderTagLib::ParseAPETag(APE::Tag *ape, EmbeddedArt *art, CMusicInfoTa
       tag.SetCueSheet(it->second.toString().to8Bit(true));
     else if (it->first == "ENCODEDBY")
     {}
+    else if (it->first == "COMPOSER")
+      tag.SetComposer(it->second.toString().to8Bit(true));
+    else if (it->first == "CONDUCTOR")
+      tag.SetConductor(it->second.toString().to8Bit(true));
+    else if ((it->first == "BAND") || (it->first == "ENSEMBLE"))
+      tag.SetEnsemble(it->second.toString().to8Bit(true));
     else if (it->first == "COMPILATION")
       tag.SetCompilation(it->second.toString().toInt() == 1);
     else if (it->first == "LYRICS")
@@ -641,8 +656,12 @@ bool CTagLoaderTagLib::ParseXiphComment(Ogg::XiphComment *xiph, EmbeddedArt *art
       tag.SetCueSheet(it->second.front().to8Bit(true));
     else if (it->first == "ENCODEDBY")
     {}
-    else if (it->first == "ENSEMBLE")
-    {}
+    else if (it->first == "COMPOSER")
+      tag.SetComposer(it->second.front().to8Bit(true));
+    else if (it->first == "CONDUCTOR")
+      tag.SetConductor(it->second.front().to8Bit(true));
+    else if ((it->first == "BAND") || (it->first == "ENSEMBLE"))
+      tag.SetEnsemble(it->second.front().to8Bit(true));
     else if (it->first == "COMPILATION")
       tag.SetCompilation(it->second.front().toInt() == 1);
     else if (it->first == "LYRICS")
@@ -750,6 +769,11 @@ bool CTagLoaderTagLib::ParseMP4Tag(MP4::Tag *mp4, EmbeddedArt *art, CMusicInfoTa
       SetGenre(tag, StringListToVectorString(it->second.toStringList()));
     else if (it->first == "\251cmt")
       tag.SetComment(it->second.toStringList().front().to8Bit(true));
+    else if (it->first == "\251wrt")
+      tag.SetComposer(it->second.toStringList().front().to8Bit(true));
+    else if (it->first == "----:com.apple.iTunes:CONDUCTOR")
+      tag.SetConductor(it->second.toStringList().front().to8Bit(true));
+    //No MP4 standard tag for "ensemble"
     else if (it->first == "cpil")
       tag.SetCompilation(it->second.toBool());
     else if (it->first == "trkn")

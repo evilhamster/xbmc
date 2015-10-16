@@ -72,6 +72,9 @@ CSong::CSong(CFileItem& item)
   strComment = tag.GetComment();
   strCueSheet = tag.GetCueSheet();
   strMood = tag.GetMood();
+  strComposer = tag.GetComposer();
+  strEnsemble = tag.GetEnsemble();
+  strConductor = tag.GetConductor();
   rating = tag.GetRating();
   iYear = stTime.wYear;
   iTrack = tag.GetTrackAndDiscNumber();
@@ -141,6 +144,9 @@ void CSong::Clear()
   strMusicBrainzTrackID.clear();
   strComment.clear();
   strMood.clear();
+  strComposer.clear();
+  strEnsemble.clear();
+  strConductor.clear();
   rating = '0';
   iTrack = 0;
   iDuration = 0;
