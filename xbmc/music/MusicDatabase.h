@@ -295,14 +295,15 @@ public:
   /////////////////////////////////////////////////
   // Link tables
   /////////////////////////////////////////////////
-  bool AddAlbumArtist(int idArtist, int idAlbum, int idRole, std::string strArtist, int iOrder);
+  bool AddAlbumArtist(int idArtist, int idAlbum, std::string strRole, std::string strArtist, int iOrder);
   int  AddAlbumContributor(int idAlbum, int idRole, const std::string& strArtist);
   bool GetAlbumsByArtist(int idArtist, bool includeFeatured, std::vector<int>& albums);
   bool GetArtistsByAlbum(int idAlbum, bool includeFeatured, std::vector<int>& artists);
   bool DeleteAlbumArtistsByAlbum(int idAlbum);
 
-  bool AddSongArtist(int idArtist, int idSong, int idRole, std::string strArtist, int iOrder);
-  int  AddSongContributor(int idSong, int idRole, const std::string& strArtist);
+  bool AddSongArtist(int idArtist, int idSong, std::string strRole, std::string strArtist, int iOrder);
+  int  AddRole(const std::string &strRole);
+  int  AddSongContributor(int idSong, const std::string &strRole, const std::string& strArtist);
   bool GetSongsByArtist(int idArtist, bool includeFeatured, std::vector<int>& songs);
   bool GetArtistsBySong(int idSong, bool includeFeatured, std::vector<int>& artists);
   bool DeleteSongArtistsBySong(int idSong);
@@ -587,6 +588,7 @@ private:
     artistCredit_idEntity = 0,  // can be idSong or idAlbum depending on context
     artistCredit_idArtist,
     artistCredit_idRole,
+    artistCredit_strRole, 
     artistCredit_strArtist,
     artistCredit_strMusicBrainzArtistID,
     artistCredit_iOrder,

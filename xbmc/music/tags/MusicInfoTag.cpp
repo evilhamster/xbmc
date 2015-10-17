@@ -116,9 +116,7 @@ const CMusicInfoTag& CMusicInfoTag::operator =(const CMusicInfoTag& tag)
   m_strMusicBrainzTRMID = tag.m_strMusicBrainzTRMID;
   m_strComment = tag.m_strComment;
   m_strMood = tag.m_strMood;
-  m_strComposer = tag.m_strComposer;
-  m_strEnsemble = tag.m_strEnsemble;
-  m_strConductor = tag.m_strConductor;
+  m_musicRole = tag.m_musicRole;
   m_strLyrics = tag.m_strLyrics;
   m_cuesheet = tag.m_cuesheet;
   m_lastPlayed = tag.m_lastPlayed;
@@ -265,21 +263,6 @@ const std::string &CMusicInfoTag::GetComment() const
 const std::string &CMusicInfoTag::GetMood() const
 {
   return m_strMood;
-}
-
-const std::string &CMusicInfoTag::GetComposer() const
-{
-  return m_strComposer;
-}
-
-const std::string &CMusicInfoTag::GetConductor() const
-{
-  return m_strConductor;
-}
-
-const std::string &CMusicInfoTag::GetEnsemble() const
-{
-  return m_strEnsemble;
 }
 
 const std::string &CMusicInfoTag::GetLyrics() const
@@ -471,21 +454,6 @@ void CMusicInfoTag::SetMood(const std::string& mood)
   m_strMood = mood;
 }
 
-void CMusicInfoTag::SetComposer(const std::string& composer)
-{
-  m_strComposer = composer;
-}
-
-void CMusicInfoTag::SetEnsemble(const std::string& ensemble)
-{
-  m_strEnsemble = ensemble;
-}
-
-void CMusicInfoTag::SetConductor(const std::string& conductor)
-{
-  m_strConductor = conductor;
-}
-
 void CMusicInfoTag::SetCueSheet(const std::string& cueSheet)
 {
   m_cuesheet = cueSheet;
@@ -661,9 +629,10 @@ void CMusicInfoTag::SetAlbum(const CAlbum& album)
   SetMusicBrainzAlbumID(album.strMusicBrainzAlbumID);
   SetGenre(album.genre);
   SetMood(StringUtils::Join(album.moods, g_advancedSettings.m_musicItemSeparator));
-  SetComposer(album.strComposer);
-  SetConductor(album.strConductor);
-  SetEnsemble(album.strEnsemble);
+  // Needs to be fixed!
+  //SetComposer(album.strComposer);
+  //SetConductor(album.strConductor);
+  //SetEnsemble(album.strEnsemble);
   SetRating('0' + album.iRating);
   SetCompilation(album.bCompilation);
   SYSTEMTIME stTime;
@@ -711,9 +680,10 @@ void CMusicInfoTag::SetSong(const CSong& song)
   SetTrackNumber(song.iTrack);
   SetDuration(song.iDuration);
   SetMood(song.strMood);
-  SetComposer(song.strComposer);
-  SetConductor(song.strConductor);
-  SetEnsemble(song.strEnsemble);
+  // Needs to be fixed!
+  //SetComposer(song.strComposer);
+  //SetConductor(song.strConductor);
+  //SetEnsemble(song.strEnsemble);
   SetCompilation(song.bCompilation);
   SetAlbumId(song.idAlbum);
   SetDatabaseId(song.idSong, MediaTypeSong);
@@ -751,9 +721,9 @@ void CMusicInfoTag::Serialize(CVariant& value) const
   value["musicbrainztrmid"] = m_strMusicBrainzTRMID;
   value["comment"] = m_strComment;
   value["mood"] = m_strMood;
-  value["composer"] = m_strEnsemble;
-  value["ensemble"] = m_strEnsemble;
-  value["conductor"] = m_strConductor;
+  //value["composer"] = m_strEnsemble;
+  //value["ensemble"] = m_strEnsemble;
+  //value["conductor"] = m_strConductor;
   value["rating"] = (int)(m_rating - '0');
   value["playcount"] = m_iTimesPlayed;
   value["lastplayed"] = m_lastPlayed.IsValid() ? m_lastPlayed.GetAsDBDateTime() : StringUtils::Empty;
@@ -822,9 +792,9 @@ void CMusicInfoTag::Archive(CArchive& ar)
     ar << m_dateAdded;
     ar << m_strComment;
     ar << m_strMood;
-    ar << m_strComposer;
-    ar << m_strEnsemble;
-    ar << m_strConductor;
+    //ar << m_strComposer;
+    //ar << m_strEnsemble;
+    //ar << m_strConductor;
     ar << m_rating;
     ar << m_iTimesPlayed;
     ar << m_iAlbumId;
@@ -858,9 +828,9 @@ void CMusicInfoTag::Archive(CArchive& ar)
     ar >> m_dateAdded;
     ar >> m_strComment;
     ar >> m_strMood;
-    ar >> m_strComposer;
-    ar >> m_strEnsemble;
-    ar >> m_strConductor;
+    //ar >> m_strComposer;
+    //ar >> m_strEnsemble;
+    //ar >> m_strConductor;
     ar >> m_rating;
     ar >> m_iTimesPlayed;
     ar >> m_iAlbumId;
@@ -899,9 +869,10 @@ void CMusicInfoTag::Clear()
   m_bCompilation = false;
   m_strComment.clear();
   m_strMood.clear();
-  m_strComposer.clear();
-  m_strEnsemble.clear();
-  m_strConductor.clear();
+  //m_strComposer.clear();
+  //m_strEnsemble.clear();
+  //m_strConductor.clear();
+  m_musicRole.clear();
   m_cuesheet.clear();
   m_rating = '0';
   m_iDbId = -1;
@@ -946,6 +917,39 @@ void CMusicInfoTag::AppendGenre(const std::string &genre)
 
   m_genre.push_back(genre);
 }
+
+void CMusicInfoTag::AppendArtistRole(const std::string &artist, const std::string &role) 
+{
+  if (!HasArtistRole(artist, role)) 
+    m_musicRole.push_back(std::make_pair(artist, role));
+}
+
+bool CMusicInfoTag::HasArtistRole(const std::string &artist, const std::string &role)
+{
+  for (std::vector<std::pair<std::string,std::string> >::iterator i = m_musicRole.begin(); i != m_musicRole.end(); ++i)
+    if (artist == i->first && role == i->second) 
+      return true;
+  return false;
+}
+
+
+const std::vector<std::string> CMusicInfoTag::GetArtistForRole (const std::string &role) 
+{
+  std::vector<std::string> v;
+
+  for ( std::vector<std::pair<std::string,std::string> >::iterator i = m_musicRole.begin(); i != m_musicRole.end(); ++i)
+    if (role == i->second ) 
+      v.push_back(i->first);
+
+  return v;
+}
+
+const std::vector<std::pair<std::string, std::string>> &CMusicInfoTag::GetRolePairs() 
+{
+  return m_musicRole;
+}
+
+
 
 std::string CMusicInfoTag::Trim(const std::string &value) const
 {

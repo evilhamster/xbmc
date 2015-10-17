@@ -102,9 +102,6 @@ CAlbum::CAlbum(const CFileItem& item)
       artistCredits.push_back(artistCredit);
     }
   }
-  strComposer = tag.GetComposer();
-  strEnsemble = tag.GetEnsemble();
-  strConductor = tag.GetConductor();
   iYear = stTime.wYear;
   bCompilation = tag.GetCompilation();
   iTimesPlayed = 0;
@@ -280,9 +277,6 @@ bool CAlbum::Load(const TiXmlElement *album, bool append, bool prioritise)
   XMLUtils::GetString(album, "musicBrainzAlbumID", strMusicBrainzAlbumID);
   std::vector<std::string> artist; // Support old style <artist></artist> for backwards compatibility
   XMLUtils::GetStringArray(album, "artist", artist, prioritise, g_advancedSettings.m_musicItemSeparator);
-  XMLUtils::GetString(album, "composer", strComposer);
-  XMLUtils::GetString(album, "conductor", strConductor);
-  XMLUtils::GetString(album, "ensemble", strEnsemble);
   XMLUtils::GetStringArray(album, "genre", genre, prioritise, g_advancedSettings.m_musicItemSeparator);
   XMLUtils::GetStringArray(album, "style", styles, prioritise, g_advancedSettings.m_musicItemSeparator);
   XMLUtils::GetStringArray(album, "mood", moods, prioritise, g_advancedSettings.m_musicItemSeparator);
@@ -429,9 +423,6 @@ bool CAlbum::Save(TiXmlNode *node, const std::string &tag, const std::string& st
   XMLUtils::SetString(album,                    "title", strAlbum);
   XMLUtils::SetString(album,       "musicBrainzAlbumID", strMusicBrainzAlbumID);
   XMLUtils::SetStringArray(album,              "artist", GetAlbumArtist());
-  XMLUtils::SetString(album,                 "composer", strComposer);
-  XMLUtils::SetString(album,                "conductor", strConductor);
-  XMLUtils::SetString(album,                 "ensemble", strEnsemble);
   XMLUtils::SetStringArray(album,               "genre", genre);
   XMLUtils::SetStringArray(album,               "style", styles);
   XMLUtils::SetStringArray(album,                "mood", moods);

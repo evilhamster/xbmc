@@ -184,6 +184,12 @@ void CMusicDatabase::CreateTables()
 
   CLog::Log(LOGINFO, "create cue table");
   m_pDS->exec("CREATE TABLE cue (idPath integer, strFileName text, strCuesheet text)");
+
+  CLog::Log(LOGINFO, "create role table");
+  m_pDS->exec("CREATE TABLE role (idRole integer primary key, strRole text)");
+  m_pDS->exec("INSERT INTO role(idRole, strRole) VALUES (1, 'Artist')");
+  m_pDS->exec("INSERT INTO role(idRole, strRole) VALUES (2, 'AlbumArtist')");
+
 }
 
 void CMusicDatabase::CreateAnalytics()
@@ -230,6 +236,8 @@ void CMusicDatabase::CreateAnalytics()
 
   m_pDS->exec("CREATE UNIQUE INDEX idxCue ON cue(idPath, strFileName(255))");
 
+  m_pDS->exec("CREATE INDEX idxRole on role(strRole(255))");
+
   CLog::Log(LOGINFO, "create triggers");
   m_pDS->exec("CREATE TRIGGER tgrDeleteAlbum AFTER delete ON album FOR EACH ROW BEGIN"
               "  DELETE FROM song WHERE song.idAlbum = old.idAlbum;"
@@ -253,6 +261,7 @@ void CMusicDatabase::CreateAnalytics()
   m_pDS->exec("CREATE TRIGGER tgrDeletePath AFTER delete ON path FOR EACH ROW BEGIN"
               "  DELETE FROM cue WHERE cue.idPath = old.idPath;"
               " END");
+
 
   // we create views last to ensure all indexes are rolled in
   CreateViews();
@@ -330,24 +339,31 @@ void CMusicDatabase::CreateViews()
               "  album_artist.idAlbum AS idAlbum, "
               "  album_artist.idArtist AS idArtist, "
               "  album_artist.idRole AS idRole, "
+              "  role.strRole AS strRole, "
               "  artist.strArtist AS strArtist, "
               "  artist.strMusicBrainzArtistID AS strMusicBrainzArtistID, "
               "  album_artist.iOrder AS iOrder "
               "FROM album_artist "
               "JOIN artist ON "
-              "     album_artist.idArtist = artist.idArtist");
+              "     album_artist.idArtist = artist.idArtist "
+              "JOIN role ON "
+              "     album_artist.idRole = role.idRole"
+              );
 
   CLog::Log(LOGINFO, "create songartist view");
   m_pDS->exec("CREATE VIEW songartistview AS SELECT"
               "  song_artist.idSong AS idSong, "
               "  song_artist.idArtist AS idArtist, "
               "  song_artist.idRole AS idRole, "
+              "  role.strRole AS strRole, "
               "  artist.strArtist AS strArtist, "
               "  artist.strMusicBrainzArtistID AS strMusicBrainzArtistID, "
               "  song_artist.iOrder AS iOrder "
               "FROM song_artist "
               "JOIN artist ON "
-              "     song_artist.idArtist = artist.idArtist");
+              "     song_artist.idArtist = artist.idArtist "
+              "JOIN role ON "
+              "     song_artist.idRole = role.idRole");
 }
 
 int CMusicDatabase::AddAlbumInfoSong(int idAlbum, const CSong& song)
@@ -486,7 +502,7 @@ bool CMusicDatabase::AddAlbum(CAlbum& album)
     artistCredit->idArtist = AddArtist(artistCredit->GetArtist(), artistCredit->GetMusicBrainzArtistID());
     AddAlbumArtist(artistCredit->idArtist,
                    album.idAlbum,
-                   Role_AlbumArtist,
+                   "AlbumArtist",
                    artistCredit->GetArtist(),
                    std::distance(album.artistCredits.begin(), artistCredit));
   }
@@ -514,23 +530,19 @@ bool CMusicDatabase::AddAlbum(CAlbum& album)
                                          artistCredit->GetMusicBrainzArtistID());
       AddSongArtist(artistCredit->idArtist,
                     song->idSong,
-                    Role_Artist,
+                    "Artist", 
                     artistCredit->GetArtist(), // we don't have song artist breakdowns from scrapers, yet
                     std::distance(song->artistCredits.begin(), artistCredit));
     }
     // Having added artist credits (maybe with MBID) add the other contributing artists (no MBID)
-    AddSongContributor(song->idSong, Role_Composer, song->strComposer);
-    AddSongContributor(song->idSong, Role_Ensemble, song->strEnsemble);
-    AddSongContributor(song->idSong, Role_Conductor, song->strConductor);
+
+    for ( std::vector<std::pair<std::string,std::string> >::const_iterator i = song->GetRolePairs().begin(); i != song->GetRolePairs().end(); ++i) 
+    {
+      AddSongContributor(song->idSong, i->second, i->first);
+    }
 
     SaveCuesheet(song->strFileName, song->strCueSheet);
   }
-
-  // Having added album artists, song artists (maybe with MBID) and other contributors 
-  // add the other contributing album artists (no MBID) 
-  AddAlbumContributor(album.idAlbum, Role_Composer, album.strComposer);
-  AddAlbumContributor(album.idAlbum, Role_Ensemble, album.strEnsemble);
-  AddAlbumContributor(album.idAlbum, Role_Conductor, album.strConductor);
 
   for (VECSONGS::const_iterator infoSong = album.infoSongs.begin(); infoSong != album.infoSongs.end(); ++infoSong)
     AddAlbumInfoSong(album.idAlbum, *infoSong);
@@ -567,7 +579,7 @@ bool CMusicDatabase::UpdateAlbum(CAlbum& album)
                                        artistCredit->GetMusicBrainzArtistID());
     AddAlbumArtist(artistCredit->idArtist,
                    album.idAlbum,
-                   Role_AlbumArtist,
+                   "AlbumArtist",
                    artistCredit->GetArtist(),
                    std::distance(album.artistCredits.begin(), artistCredit));
   }
@@ -599,7 +611,7 @@ bool CMusicDatabase::UpdateAlbum(CAlbum& album)
                                          artistCredit->GetMusicBrainzArtistID());
       AddSongArtist(artistCredit->idArtist,
                     song->idSong,
-                    Role_Artist,
+                    "Artist",
                     artistCredit->GetArtist(),
                     std::distance(song->artistCredits.begin(), artistCredit));
     }
@@ -758,15 +770,15 @@ bool CMusicDatabase::GetSong(int idSong, CSong& song)
 
       int idSongArtist = record->at(songArtistOffset + artistCredit_idArtist).get_asInt();
       int idSongArtistRole = record->at(songArtistOffset + artistCredit_idRole).get_asInt();
-      if (idSongArtistRole == Role_Artist)
-        song.artistCredits.push_back(GetArtistCreditFromDataset(record, songArtistOffset));
-      else if (idSongArtistRole == Role_Conductor)
-        song.strConductor = record->at(songArtistOffset + artistCredit_strArtist).get_asString();
-      else if (idSongArtistRole == Role_Composer)
-        song.strComposer = record->at(songArtistOffset + artistCredit_strArtist).get_asString();
-      else if (idSongArtistRole == Role_Ensemble)
-        song.strEnsemble = record->at(songArtistOffset + artistCredit_strArtist).get_asString();
+      std::string strSongArtistRole = record->at(songArtistOffset + artistCredit_strRole).get_asString();
+     
 
+      if (strSongArtistRole == "Artist")
+        song.artistCredits.push_back(GetArtistCreditFromDataset(record, songArtistOffset));
+      else if (strSongArtistRole != "AlbumArtist")
+        song.AppendArtistRole(record->at(songArtistOffset + artistCredit_strArtist).get_asString(), strSongArtistRole);
+      m_pDS->next();
+      
       m_pDS->next();
     }
     m_pDS->close(); // cleanup recordset data
@@ -1015,14 +1027,10 @@ bool CMusicDatabase::GetAlbum(int idAlbum, CAlbum& album, bool getSongs /* = tru
       // row in the result set for each artist credit.      
       int idAlbumArtist = record->at(albumArtistOffset + artistCredit_idArtist).get_asInt();
       int idArtistRole = record->at(albumArtistOffset + artistCredit_idRole).get_asInt();
-      if (idArtistRole == Role_AlbumArtist)
+      std::string strArtistRole = record->at(albumArtistOffset + artistCredit_strRole).get_asString();
+
+      if (strArtistRole == "AlbumArtist")
         album.artistCredits.push_back(GetArtistCreditFromDataset(record, albumArtistOffset));
-      else if (idArtistRole == Role_Conductor)
-        album.strConductor = record->at(albumArtistOffset + artistCredit_strArtist).get_asString();
-      else if (idArtistRole == Role_Composer)
-        album.strComposer = record->at(albumArtistOffset + artistCredit_strArtist).get_asString();
-      else if (idArtistRole == Role_Ensemble)
-        album.strEnsemble = record->at(albumArtistOffset + artistCredit_strArtist).get_asString();
       m_pDS->next();
     }
     m_pDS->close(); // cleanup recordset data
@@ -1059,15 +1067,12 @@ bool CMusicDatabase::GetAlbum(int idAlbum, CAlbum& album, bool getSongs /* = tru
 
         int idSongArtist = record->at(songArtistOffset + artistCredit_idArtist).get_asInt();
         int idSongArtistRole = record->at(songArtistOffset + artistCredit_idRole).get_asInt();
-        //By query order song is the last one appened to the album song vector.                
-        if (idSongArtistRole == Role_Artist)
-          album.songs.back().artistCredits.push_back(GetArtistCreditFromDataset(record, albumArtistOffset));
-        else if (idSongArtistRole == Role_Conductor)
-          album.songs.back().strConductor = record->at(albumArtistOffset + artistCredit_strArtist).get_asString();
-        else if (idSongArtistRole == Role_Composer)
-          album.songs.back().strComposer = record->at(albumArtistOffset + artistCredit_strArtist).get_asString();
-        else if (idSongArtistRole == Role_Ensemble)
-          album.songs.back().strEnsemble = record->at(albumArtistOffset + artistCredit_strArtist).get_asString();
+        std::string strSongArtistRole = record->at(albumArtistOffset + artistCredit_strRole).get_asString();
+        //By query order song is the last one appened to the album song vector.            
+        if (strSongArtistRole == "Artist")
+          album.songs.back().artistCredits.push_back(GetArtistCreditFromDataset(record, songArtistOffset));
+        else if (strSongArtistRole != "AlbumArtist")
+          album.songs.back().AppendArtistRole(record->at(songArtistOffset + artistCredit_strArtist).get_asString(), strSongArtistRole);
         m_pDS->next();
       }
       m_pDS->close(); // cleanup recordset data
@@ -1389,15 +1394,48 @@ bool CMusicDatabase::DeleteArtistDiscography(int idArtist)
   return ExecuteQuery(strSQL);
 }
 
-bool CMusicDatabase::AddSongArtist(int idArtist, int idSong, int idRole, std::string strArtist, int iOrder)
+bool CMusicDatabase::AddSongArtist(int idArtist, int idSong, std::string strRole, std::string strArtist, int iOrder)
 {
+  int idRole = AddRole(strRole);
   std::string strSQL;
   strSQL = PrepareSQL("replace into song_artist (idArtist, idSong, idRole, strArtist, iOrder) values(%i,%i,%i,'%s',%i)",
     idArtist, idSong, idRole, strArtist.c_str(), iOrder);
   return ExecuteQuery(strSQL);
 }
 
-int CMusicDatabase::AddSongContributor(int idSong, int idRole, const std::string& strArtist)
+int CMusicDatabase::AddRole(const std::string &strRole)
+{
+  int idRole = -1;
+  std::string strSQL;
+
+  try
+  {
+    if (NULL == m_pDB.get()) return -1;
+    if (NULL == m_pDS.get()) return -1;
+    strSQL = PrepareSQL("SELECT idRole FROM role WHERE strRole LIKE '%s'", strRole.c_str());
+    m_pDS->query(strSQL);
+    if ( m_pDS->num_rows() > 0 )
+     idRole = (int)m_pDS->fv("idRole").get_asInt(); 
+    m_pDS->close();
+
+    if ( idRole < 0 ) 
+    {
+      strSQL = PrepareSQL("INSERT INTO role (strRole) VALUES ('%s')", strRole.c_str());
+      m_pDS->exec(strSQL);
+      idRole = (int)m_pDS->lastinsertid();
+      m_pDS->close();
+    }
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "musicdatabase:unable to AddRole (%s)", strSQL.c_str());
+  }
+  return idRole;
+}
+
+
+
+int CMusicDatabase::AddSongContributor(int idSong, const std::string &strRole, const std::string& strArtist)
 {
   if (strArtist.empty())
     return -1;
@@ -1409,10 +1447,11 @@ int CMusicDatabase::AddSongContributor(int idSong, int idRole, const std::string
     if (NULL == m_pDS.get()) return -1;
 
     int idArtist = -1;
+
     // Add artist. As we only have name (no MBID) first try to identify artist from song 
     // as they may have already been added with a different role (including MBID).
     strSQL = PrepareSQL("SELECT idArtist FROM song_artist WHERE idSong = %i AND strArtist LIKE '%s' ",
-                                    idSong, strArtist.c_str());
+        idSong, strArtist.c_str());
     m_pDS->query(strSQL);
     if (m_pDS->num_rows() > 0)
       idArtist = (int)m_pDS->fv("idArtist").get_asInt();
@@ -1422,7 +1461,7 @@ int CMusicDatabase::AddSongContributor(int idSong, int idRole, const std::string
       idArtist = AddArtist(strArtist, "");
 
     // Add to song_artist table
-    AddSongArtist(idArtist, idSong, idRole, strArtist, 0);
+    AddSongArtist(idArtist, idSong, strRole, strArtist, 0);
 
     return idArtist;
   }
@@ -1439,63 +1478,13 @@ bool CMusicDatabase::DeleteSongArtistsBySong(int idSong)
   return ExecuteQuery(PrepareSQL("DELETE FROM song_artist WHERE idSong = %i", idSong));
 }
 
-bool CMusicDatabase::AddAlbumArtist(int idArtist, int idAlbum, int idRole, std::string strArtist, int iOrder)
+bool CMusicDatabase::AddAlbumArtist(int idArtist, int idAlbum, std::string strRole, std::string strArtist, int iOrder)
 {
+  int idRole = AddRole(strRole);
   std::string strSQL;
   strSQL = PrepareSQL("replace into album_artist (idArtist, idAlbum, idRole, strArtist, iOrder) values(%i,%i,%i,'%s',%i)",
     idArtist, idAlbum, idRole, strArtist.c_str(), iOrder);
   return ExecuteQuery(strSQL);
-}
-
-int CMusicDatabase::AddAlbumContributor(int idAlbum, int idRole, const std::string& strArtist)
-{
-  if (strArtist.empty())
-    return -1;
-
-  std::string strSQL;
-  try
-  {
-    if (NULL == m_pDB.get()) return -1;
-    if (NULL == m_pDS.get()) return -1;
-
-    int idArtist = -1;
-    // Add artist. 
-    // 1) As we only have name (no MBID) first try to identify artist from album 
-    // as they may have already been added with a different role (including MBID).
-    strSQL = PrepareSQL("SELECT idArtist FROM album_artist WHERE idAlbum = %i AND strArtist LIKE '%s' ",
-                        idAlbum, strArtist.c_str());
-    m_pDS->query(strSQL);
-    if (m_pDS->num_rows() > 0)
-      idArtist = (int)m_pDS->fv("idArtist").get_asInt();
-    m_pDS->close();
-
-    //2) Otherwise try to identify artist from the songs for that album
-    if (idArtist < 0)
-    {
-      strSQL = PrepareSQL("SELECT song_artist.idArtist FROM song JOIN song_artist ON song.idsong = song_artist.idSong "
-                          "WHERE song.idAlbum = %i AND song_artist.strArtist LIKE '%s' ",
-                           idAlbum, strArtist.c_str());
-      m_pDS->query(strSQL);
-      if (m_pDS->num_rows() > 0)
-        idArtist = (int)m_pDS->fv("idArtist").get_asInt();
-      m_pDS->close();
-    }
-
-    //3) Finally try to identify artist by name alone and add if not found
-    if (idArtist < 0)
-      idArtist = AddArtist(strArtist, "");
-
-    // Add to album_artist table
-    AddAlbumArtist(idArtist, idAlbum, idRole, strArtist, 0); 
-
-    return idArtist;
-  }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "musicdatabase:unable to AddAlbumContributor (%s)", strSQL.c_str());
-  }
-
-  return -1;
 }
 
 bool CMusicDatabase::DeleteAlbumArtistsByAlbum(int idAlbum)
@@ -4037,12 +4026,16 @@ void CMusicDatabase::UpdateTables(int version)
    }
   if (version < 56)
   {
+    
+    m_pDS->exec("CREATE TABLE role (idRole integer primary key, strRole text)");
+    m_pDS->exec("INSERT INTO role(idRole, strRole) VALUES (1, 'Artist')");
+    m_pDS->exec("INSERT INTO role(idRole, strRole) VALUES (2, 'AlbumArtist')");
+
     //Remove strJoinPhrase, boolFeatured from song_artist table and add idRole
     m_pDS->exec("CREATE TABLE song_artist_new (idArtist integer, idSong integer, idRole integer, iOrder integer, strArtist text)");
     m_pDS->exec("INSERT INTO song_artist_new (idArtist, idSong, idRole, iOrder, strArtist) "
       "SELECT idArtist, idSong, 0 as idRole, iOrder, strArtist FROM song_artist");
-    std::string strSQL = PrepareSQL("UPDATE song_artist_new set idRole = %i", Role_Artist);
-    m_pDS->exec(strSQL.c_str());
+    m_pDS->exec("UPDATE song_artist_new set idRole = 1");
     m_pDS->exec("DROP TABLE song_artist");
     m_pDS->exec("ALTER TABLE song_artist_new RENAME TO song_artist");
 
@@ -4050,8 +4043,7 @@ void CMusicDatabase::UpdateTables(int version)
     m_pDS->exec("CREATE TABLE album_artist_new (idArtist integer, idAlbum integer, idRole integer, iOrder integer, strArtist text)");
     m_pDS->exec("INSERT INTO album_artist_new (idArtist, idAlbum, idRole, iOrder, strArtist) "
       "SELECT idArtist, idAlbum, 0 as idRole, iOrder, strArtist FROM album_artist");
-    strSQL = PrepareSQL("UPDATE album_artist_new set idRole = %i", Role_AlbumArtist);
-    m_pDS->exec(strSQL.c_str());
+    m_pDS->exec("UPDATE album_artist_new set idRole = 2");
     m_pDS->exec("DROP TABLE album_artist");
     m_pDS->exec("ALTER TABLE album_artist_new RENAME TO album_artist");
 

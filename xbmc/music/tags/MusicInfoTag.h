@@ -75,9 +75,6 @@ public:
   const std::string& GetMusicBrainzTRMID() const;
   const std::string& GetComment() const;
   const std::string& GetMood() const;
-  const std::string& GetComposer() const;
-  const std::string& GetEnsemble() const;
-  const std::string& GetConductor() const;
   const std::string& GetLyrics() const;
   const std::string& GetCueSheet() const;
   const CDateTime& GetLastPlayed() const;
@@ -122,9 +119,9 @@ public:
   void SetMusicBrainzTRMID(const std::string& strTRMID);
   void SetComment(const std::string& comment);
   void SetMood(const std::string& mood);
-  void SetComposer(const std::string& composer);
-  void SetEnsemble(const std::string& ensemble);
-  void SetConductor(const std::string& Conductor);
+  //void SetComposer(const std::string& composer);
+  //void SetEnsemble(const std::string& ensemble);
+  //void SetConductor(const std::string& Conductor);
   void SetLyrics(const std::string& lyrics);
   void SetCueSheet(const std::string& cueSheet);
   void SetRating(char rating);
@@ -157,6 +154,17 @@ public:
    */
   void AppendGenre(const std::string &genre);
 
+  /*! \brief Append a artist/role pair to a the roles list
+    ...
+    \param string artist, string role
+    */
+  void AppendArtistRole(const std::string &artist, const std::string &role);
+  bool HasArtistRole(const std::string &artist, const std::string &role);
+
+  const std::vector<std::string> GetArtistForRole (const std::string &role);
+  const std::vector<std::pair<std::string, std::string>> &GetRolePairs();
+  
+
   virtual void Archive(CArchive& ar);
   virtual void Serialize(CVariant& ar) const;
   virtual void ToSortable(SortItem& sortable, Field field) const;
@@ -186,9 +194,12 @@ protected:
   std::string m_strMusicBrainzTRMID;
   std::string m_strComment;
   std::string m_strMood;
-  std::string m_strComposer;
-  std::string m_strEnsemble;
-  std::string m_strConductor;
+  //std::string m_strComposer;
+  //std::string m_strEnsemble;
+  //std::string m_strConductor;
+
+  std::vector<std::pair<std::string, std::string>> m_musicRole;
+
   std::string m_strLyrics;
   std::string m_cuesheet;
   CDateTime m_lastPlayed;

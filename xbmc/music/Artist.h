@@ -104,8 +104,6 @@ public:
   CDateTime dateAdded;
 };
 
-enum MusicArtistRoles { Role_Unknown, Role_Artist, Role_AlbumArtist, Role_Composer, Role_Conductor, Role_Ensemble };
-
 class CArtistCredit
 {
   friend class CAlbum;

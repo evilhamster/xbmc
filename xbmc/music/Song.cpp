@@ -72,9 +72,10 @@ CSong::CSong(CFileItem& item)
   strComment = tag.GetComment();
   strCueSheet = tag.GetCueSheet();
   strMood = tag.GetMood();
-  strComposer = tag.GetComposer();
+  /*strComposer = tag.GetComposer();
   strEnsemble = tag.GetEnsemble();
-  strConductor = tag.GetConductor();
+  strConductor = tag.GetConductor();*/
+  m_musicRole = tag.GetRolePairs();
   rating = tag.GetRating();
   iYear = stTime.wYear;
   iTrack = tag.GetTrackAndDiscNumber();
@@ -144,9 +145,10 @@ void CSong::Clear()
   strMusicBrainzTrackID.clear();
   strComment.clear();
   strMood.clear();
-  strComposer.clear();
+  /*strComposer.clear();
   strEnsemble.clear();
-  strConductor.clear();
+  strConductor.clear();*/
+  m_musicRole.clear();
   rating = '0';
   iTrack = 0;
   iDuration = 0;
@@ -213,3 +215,36 @@ bool CSong::ArtMatches(const CSong &right) const
   return (right.strThumb == strThumb &&
           embeddedArt.matches(right.embeddedArt));
 }
+
+void CSong::AppendArtistRole(const std::string &artist, const std::string &role)
+{
+    if (!HasArtistRole(artist, role))    
+          m_musicRole.push_back(std::make_pair(artist, role));
+}
+
+
+bool CSong::HasArtistRole(const std::string &artist, const std::string &role)
+{ 
+  for (std::vector<std::pair<std::string,std::string> >::iterator i = m_musicRole.begin(); i != m_musicRole.end(); ++i)
+    if (artist == i->first && role == i->second)
+      return true;
+  return false;
+}
+
+
+const std::vector<std::string> CSong::GetArtistForRole (const std::string &role)
+{
+  std::vector<std::string> v;
+
+  for ( std::vector<std::pair<std::string,std::string> >::iterator i = m_musicRole.begin(); i != m_musicRole.end(); ++i)
+    if (role == i->second ) 
+      v.push_back(i->first);
+
+  return v;
+}
+
+const std::vector<std::pair<std::string, std::string>> &CSong::GetRolePairs()
+{
+    return m_musicRole;
+}
+

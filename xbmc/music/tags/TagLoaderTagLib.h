@@ -76,4 +76,5 @@ private:
   void                           SetArtist(MUSIC_INFO::CMusicInfoTag &tag, const std::vector<std::string> &values);
   void                           SetAlbumArtist(MUSIC_INFO::CMusicInfoTag &tag, const std::vector<std::string> &values);
   void                           SetGenre(MUSIC_INFO::CMusicInfoTag &tag, const std::vector<std::string> &values);
+  void                           AppendRole(MUSIC_INFO::CMusicInfoTag &tag, const std::string &role, const std::vector<std::string> &values);
 };

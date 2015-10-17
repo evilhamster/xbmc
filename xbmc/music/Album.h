@@ -128,9 +128,6 @@ public:
   std::string m_strDateOfRelease;
   int iRating;
   int iYear;
-  std::string strComposer;
-  std::string strEnsemble;
-  std::string strConductor;
   bool bCompilation;
   int iTimesPlayed;
   CDateTime dateAdded;

@@ -118,12 +118,19 @@ public:
    */
   bool ArtMatches(const CSong &right) const;
 
+  void AppendArtistRole(const std::string &artist, const std::string &role);
+  bool HasArtistRole(const std::string &artist, const std::string &role);
+
+  const std::vector<std::string> GetArtistForRole (const std::string &role);
+  const std::vector<std::pair<std::string, std::string>> &GetRolePairs();
+
   long idSong;
   int idAlbum;
   std::string strFileName;
   std::string strTitle;
   std::string strArtistDesc;
   VECARTISTCREDITS artistCredits;
+
   std::string strAlbum;
   std::vector<std::string> genre;
   std::string strThumb;
@@ -131,9 +138,9 @@ public:
   std::string strMusicBrainzTrackID;
   std::string strComment;
   std::string strMood;
-  std::string strComposer;
+  /*std::string strComposer;
   std::string strEnsemble;
-  std::string strConductor;
+  std::string strConductor;*/
   std::string strCueSheet;
   char rating;
   int iTrack;
@@ -154,6 +161,7 @@ public:
 
 private:
   std::vector<std::string> m_albumArtist; // Album artist from tag for album processing, no desc or MBID
+  std::vector<std::pair<std::string, std::string>> m_musicRole;
 };
 
 /*!
